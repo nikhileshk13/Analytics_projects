@@ -31,8 +31,13 @@ def index():
 @app.route('/listening_time_yearly')
 def listening_time_yearly():
     a, b = ob.listening_time()
-    fig = px.bar(b, x='Year', y="Total_listening_time_in_ms", title='Listening Time for Each Year',
-                 labels={'Total_listening_time_in_ms': 'Listening Time in ms'})
+    fig = px.pie(b, names='Year', values="Total_listening_time_in_ms", title='Listening Time for Each Year',
+                 labels={'Total_listening_time_in_ms': 'Listening Time in ms'}, hole=0.6)
+    fig.update_traces(textposition='outside', textinfo='label+value+text')
+    fig.update_layout(annotations=[dict(text='Total Listening Time',
+                                        x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
+                                   dict(text=str(b['Total_listening_time_in_ms'].sum()),
+                                        x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Listening Time for Each Year'
     description = 'This chart shows how the listening time has varied through each year'
