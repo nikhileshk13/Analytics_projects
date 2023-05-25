@@ -70,10 +70,20 @@ def artists_listened_yearly():
 def new_artists_songs_discovered():
     a, b, d = ob.artists_listened()
     a, b, c = ob.songs_listened()
-    fig1 = px.bar(c, x='Year', y="New_songs_discovered", title='New Songs Discovered Each Year',
-                 labels={'New_songs_discovered': 'New Songs Discovered'})
-    fig2 = px.bar(d, x='Year', y="New_artists_discovered", title='New Artists Discovered Each Year',
-                 labels={'New_artists_discovered': 'New Artists Discovered'})
+    fig1 = px.pie(c, names='Year', values="New_songs_discovered", title='New Songs Discovered Each Year',
+                  labels={'New_songs_discovered': 'New Songs Discovered'}, hole=0.6)
+    fig1.update_traces(textposition='outside', textinfo='label+value+text')
+    fig1.update_layout(annotations=[dict(text='Total Songs Listened',
+                                         x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
+                                    dict(text=str(c['New_songs_discovered'].sum()),
+                                         x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
+    fig2 = px.pie(d, names='Year', values="New_artists_discovered", title='New Artists Discovered Each Year',
+                  labels={'New_artists_discovered': 'New Artists Discovered'}, hole=0.6)
+    fig2.update_traces(textposition='outside', textinfo='label+value+text')
+    fig2.update_layout(annotations=[dict(text='Total Artists Listened',
+                                         x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
+                                    dict(text=str(d['New_artists_discovered'].sum()),
+                                         x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
     figs = [fig1, fig2]
     header = 'New Songs and Artists Discovered Each Year'
     description = 'These charts shows how the number of new songs and artists that were discovered each year'
