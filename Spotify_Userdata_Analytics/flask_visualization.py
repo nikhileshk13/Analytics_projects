@@ -30,13 +30,15 @@ def index():
 
 @app.route('/listening_time_yearly')
 def listening_time_yearly():
-    a, b = ob.listening_time()
-    fig = px.pie(b, names='Year', values="Total_listening_time_in_ms", title='Listening Time for Each Year',
+    a = ob.listening_time()
+    # fig = px.bar(b, x='Year', y="Total_listening_time_in_ms", title='Listening Time for Each Year',
+    # labels={'Total_listening_time_in_ms': 'Listening Time in ms'})
+    fig = px.pie(a, names='Year', values="Total_listening_time_in_ms", title='Listening Time for Each Year',
                  labels={'Total_listening_time_in_ms': 'Listening Time in ms'}, hole=0.6)
     fig.update_traces(textposition='outside', textinfo='label+value+text')
     fig.update_layout(annotations=[dict(text='Total Listening Time',
                                         x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
-                                   dict(text=str(b['Total_listening_time_in_ms'].sum()),
+                                   dict(text=str(a['Total_listening_time_in_ms'].sum()),
                                         x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Listening Time for Each Year'
@@ -44,21 +46,45 @@ def listening_time_yearly():
     return render_template('test_flask.html', graph=graph, header=header, description=description)
 
 
+@app.route('/listening_time_monthly')
+def listening_time_monthly():
+    a = ob.listening_time_monthly()
+    fig = px.line(a, x='Month', y="Total_listening_time",
+                  title='Variation of Listening Time Each Month',
+                  labels={'Total_listening_time': 'Listening Time in ms'})
+    graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = 'Monthly Variation of Listening Time'
+    description = 'This chart shows how the listening time has varied each month'
+    return render_template('test_flask.html', graph=graph, header=header, description=description)
+
+
 @app.route('/songs_listened_yearly')
 def songs_listened_yearly():
-    a, b, c = ob.songs_listened()
-    fig = px.bar(b, x='Year', y="Total_songs_listened", title='Number of Songs Listened Each Year',
-                  labels={'Total_songs_listened': 'Songs Listened'})
+    a = ob.songs_listened()
+    fig = px.bar(a, x='Year', y="Total_songs_listened", title='Number of Songs Listened Each Year',
+                 labels={'Total_songs_listened': 'Songs Listened'})
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Number of Songs Listened Each Year'
     description = 'This chart shows how the number of songs listened has varied through each year'
     return render_template('test_flask.html', graph=graph, header=header, description=description)
 
 
+@app.route('/songs_listened_monthly')
+def songs_listened_monthly():
+    a = ob.songs_listened_monthly()
+    fig = px.line(a, x='Month', y="Number_of_songs_listened",
+                  title='Variation of Songs Listened Each Month',
+                  labels={'Number_of_songs_listened': 'Number of Songs Listened'})
+    graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = 'Monthly Variation of Number of Songs Listened'
+    description = 'This chart shows how the number of songs listened has varied each month'
+    return render_template('test_flask.html', graph=graph, header=header, description=description)
+
+
 @app.route('/artists_listened_yearly')
 def artists_listened_yearly():
-    a, b, d = ob.artists_listened()
-    fig = px.bar(b, x='Year', y="Total_artists_listened_to", title='Number of Artists Listened Each Year',
+    a = ob.artists_listened()
+    fig = px.bar(a, x='Year', y="Total_artists_listened_to", title='Number of Artists Listened Each Year',
                  labels={'Total_artists_listened_to': 'Artists Listened'})
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Number of Artists Listened Each Year'
@@ -66,38 +92,60 @@ def artists_listened_yearly():
     return render_template('test_flask.html', graph=graph, header=header, description=description)
 
 
-@app.route('/new_artists_songs_discovered')
-def new_artists_songs_discovered():
-    a, b, d = ob.artists_listened()
-    a, b, c = ob.songs_listened()
-    fig1 = px.pie(c, names='Year', values="New_songs_discovered", title='New Songs Discovered Each Year',
-                  labels={'New_songs_discovered': 'New Songs Discovered'}, hole=0.6)
-    fig1.update_traces(textposition='outside', textinfo='label+value+text')
-    fig1.update_layout(annotations=[dict(text='Total Songs Listened',
-                                         x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
-                                    dict(text=str(c['New_songs_discovered'].sum()),
-                                         x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
-    fig2 = px.pie(d, names='Year', values="New_artists_discovered", title='New Artists Discovered Each Year',
-                  labels={'New_artists_discovered': 'New Artists Discovered'}, hole=0.6)
-    fig2.update_traces(textposition='outside', textinfo='label+value+text')
-    fig2.update_layout(annotations=[dict(text='Total Artists Listened',
-                                         x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
-                                    dict(text=str(d['New_artists_discovered'].sum()),
-                                         x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
-    figs = [fig1, fig2]
-    header = 'New Songs and Artists Discovered Each Year'
-    description = 'These charts shows how the number of new songs and artists that were discovered each year'
-    return render_template('test_flask_yearly.html', graph=figs, header=header, description=description)
+@app.route('/artists_listened_monthly')
+def artists_listened_monthly():
+    a = ob.artists_listened_monthly()
+    fig = px.line(a, x='Month', y="Number_of_artists_listened",
+                  title='Variation of Artists Listened to Each Month',
+                  labels={'Number_of_artists_listened': 'Number of Artists Listened to'})
+    graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = 'Monthly Variation of Number of Artists Listened to'
+    description = 'This chart shows how the number of artists listened to has varied each month'
+    return render_template('test_flask.html', graph=graph, header=header, description=description)
+
+
+@app.route('/new_songs_discovered')
+def new_songs_discovered():
+    a = ob.songs_listened_new()
+    fig = px.pie(a, names='Year', values="New_songs_discovered", title='New Artists Discovered Each Year',
+                 labels={'New_artists_discovered': 'New Artists Discovered'}, hole=0.6)
+    fig.update_traces(textposition='outside', textinfo='label+value+text')
+    fig.update_layout(annotations=[dict(text='Total Artists Listened',
+                                        x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
+                                   dict(text=str(a['New_artists_discovered'].sum()),
+                                        x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
+    graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = 'New Songs Discovered Each Year'
+    description = 'This chart shows the number of new songs that were discovered each year as well as the total ' \
+                  'number of songs listened to till now'
+    return render_template('test_flask.html', graph=graph, header=header, description=description)
+
+
+@app.route('/new_artists_discovered')
+def new_artists_discovered():
+    a = ob.artists_listened_new()
+    fig = px.pie(a, names='Year', values="New_artists_discovered", title='New Songs Discovered Each Year',
+                 labels={'New_songs_discovered': 'New Songs Discovered'}, hole=0.6)
+    fig.update_traces(textposition='outside', textinfo='label+value+text')
+    fig.update_layout(annotations=[dict(text='Total Songs Listened',
+                                        x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
+                                   dict(text=str(a['New_songs_discovered'].sum()),
+                                        x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
+    graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header = 'New Artists Discovered Each Year'
+    description = 'This chart shows the number of new artists that were discovered each year as well as the total ' \
+                  'number of artists listened to till now'
+    return render_template('test_flask.html', graph=graph, header=header, description=description)
 
 
 @app.route('/fav_artists_overall')
 def fav_artists_overall():
     a, b = ob.favorite_artist()
     fig = px.bar(b, x='Artist', y="fav_artist_score", color='Artist', title='Top 10 Favorite Artists Overall',
-                  labels={'fav_artist_score': 'Score', 'Total_listening_time_in_ms': 'Listening Time in ms',
-                          'Total_no_of_songs_listened': 'Number of Songs Listened',
-                          'No_of_times_played': 'Number of Times Played'},
-                  hover_data=['Total_listening_time_in_ms', 'Total_no_of_songs_listened', 'No_of_times_played'])
+                 labels={'fav_artist_score': 'Score', 'Total_listening_time_in_ms': 'Listening Time in ms',
+                         'Total_no_of_songs_listened': 'Number of Songs Listened',
+                         'No_of_times_played': 'Number of Times Played'},
+                 hover_data=['Total_listening_time_in_ms', 'Total_no_of_songs_listened', 'No_of_times_played'])
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Favorite Artists Overall'
     description = 'This chart shows the favorite artists overall. The favorite artists are determined by a score' \
@@ -129,9 +177,9 @@ def fav_artist_yearly():
 def fav_songs_overall():
     a, b = ob.favorite_song()
     fig = px.bar(b, x='Song', y="fav_song_score", color='Song', title='Top 10 Favorite Songs Overall',
-                  labels={'fav_song_score': 'Score', 'Total_listening_time_in_ms': 'Listening Time in ms',
-                          'No_of_times_played': 'Number of Times Played'},
-                  hover_data=['Total_listening_time_in_ms', 'No_of_times_played'])
+                 labels={'fav_song_score': 'Score', 'Total_listening_time_in_ms': 'Listening Time in ms',
+                         'No_of_times_played': 'Number of Times Played'},
+                 hover_data=['Total_listening_time_in_ms', 'No_of_times_played'])
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Favorite Songs Overall'
     description = 'This chart shows the favorite songs overall. The favorite songs are determined by a score' \
@@ -246,5 +294,3 @@ def day_most_songs():
 
 
 app.run(debug=True)
-
-
