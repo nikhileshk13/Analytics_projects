@@ -31,6 +31,7 @@ class Analytics:
         self.tot_songs_overall = self.data['master_metadata_track_name'].unique()
         self.tot_albums_overall = self.data['master_metadata_album_album_name'].unique()
         self.dates_unique = self.data['date'].unique()
+        self.unique_months = data['ts'].dt.strftime('%m/%y').unique()
 
         self.morn = [dt.time(6, 0, 0), dt.time(11, 59, 59)]
         self.afnoon = [dt.time(12, 0, 0), dt.time(17, 59, 59)]
@@ -40,26 +41,34 @@ class Analytics:
         self.td = ['Morning', 'Afternoon', 'Evening', 'Night']
 
     def listening_time(self):
-        tot_listening_time = 'Total listening time from ' + str(self.data['date'].min()) + ' to ' + \
-                             str(self.data['date'].max()) + ' in minutes is ' + \
-                             str(round(self.data['ms_played'].sum() / 60000, 2))
-
         listenting_time_yearly = list()
         for i in range(0, len(self.yearly_data)):
             listenting_time_yearly.append(self.yearly_data[i]['ms_played'].sum())
         df_listening_time_yearly = pd.DataFrame(list(zip(self.years, listenting_time_yearly)),
                                                 columns=['Year', 'Total_listening_time_in_ms'])
 
-        return tot_listening_time, df_listening_time_yearly
+        return df_listening_time_yearly
+
+    def listening_time_monthly(self):
+        listening_time_monthly = list()
+        for i in range(0, len(self.unique_months)):
+            temp = self.data[self.data['ts'].dt.strftime('%m/%y') == self.unique_months[i]]
+            listening_time_monthly.append(temp['ms_played'].sum())
+        df_listening_time_monthly = pd.DataFrame(list(zip(self.unique_months, listening_time_monthly)),
+                                                 columns=['Month', 'Total_listening_time'])
+
+        return df_listening_time_monthly
+
 
     def songs_listened(self):
-        tot_songs_listened = 'Total number of songs listened is ' + str(len(self.tot_songs_overall))
-
         songs_yearly = list()
         for i in range(0, len(self.yearly_data)):
             songs_yearly.append(self.yearly_data[i]['master_metadata_track_name'].unique().shape[0])
         df_songs_yearly = pd.DataFrame(list(zip(self.years, songs_yearly)), columns=['Year', 'Total_songs_listened'])
 
+        return df_songs_yearly
+
+    def songs_listened_new(self):
         new_songs_yearly = list()
         new_songs_yearly_count = list()
         for i in range(0, len(self.yearly_data)):
@@ -69,17 +78,28 @@ class Analytics:
         df_new_songs_yearly = pd.DataFrame(list(zip(self.years, new_songs_yearly_count)),
                                            columns=['Year', 'New_songs_discovered'])
 
-        return tot_songs_listened, df_songs_yearly, df_new_songs_yearly
+        return df_new_songs_yearly
+
+    def songs_listened_monthly(self):
+        songs_listened_monthly = list()
+        for i in range(0, len(self.unique_months)):
+            temp = self.data[self.data['ts'].dt.strftime('%m/%y') == self.unique_months[i]]
+            songs_listened_monthly.append(len(temp['master_metadata_track_name'].unique()))
+        df_songs_listened_monthly = pd.DataFrame(list(zip(self.unique_months, songs_listened_monthly)),
+                                                 columns=['Month', 'Number_of_songs_listened'])
+
+        return df_songs_listened_monthly
 
     def artists_listened(self):
-        tot_artists_listened = 'Total number of artists listened to is ' + str(len(self.tot_artist_overall))
-
         artists_yearly = list()
         for i in range(0, len(self.yearly_data)):
             artists_yearly.append(self.yearly_data[i]['master_metadata_album_artist_name'].unique().shape[0])
         df_artists_yearly = pd.DataFrame(list(zip(self.years, artists_yearly)),
                                          columns=['Year', 'Total_artists_listened_to'])
 
+        return df_artists_yearly
+
+    def artists_listened_new(self):
         new_artists_yearly = list()
         new_artists_yearly_count = list()
         for i in range(0, len(self.yearly_data)):
@@ -88,8 +108,17 @@ class Analytics:
             new_artists_yearly.extend(temp)
         df_new_artist_yearly = pd.DataFrame(list(zip(self.years, new_artists_yearly_count)),
                                             columns=['Year', 'New_artists_discovered'])
+        return df_new_artist_yearly
 
-        return tot_artists_listened, df_artists_yearly, df_new_artist_yearly
+    def artists_listened_monthly(self):
+        artists_listened_monthly = list()
+        for i in range(0, len(self.unique_months)):
+            temp = self.data[self.data['ts'].dt.strftime('%m/%y') == self.unique_months[i]]
+            artists_listened_monthly.append(len(temp['master_metadata_album_artist_name'].unique()))
+        df_artists_listened_monthly = pd.DataFrame(list(zip(self.unique_months, artists_listened_monthly)),
+                                                   columns=['Month', 'Number_of_artists_listened'])
+        
+        return df_artists_listened_monthly
 
     def favorite_artist(self):
         artist_listentime_overall = list()
@@ -103,16 +132,18 @@ class Analytics:
             artist_songsplayed_overall.append(temp.shape[0])
 
         df = pd.DataFrame(list(
-            zip(self.tot_artist_overall, artist_listentime_overall, artist_totsongs_overall, artist_songsplayed_overall)),
-                          columns=['Artist', 'Total_listening_time_in_ms', 'Total_no_of_songs_listened',
-                                   'No_of_times_played'])
+            zip(self.tot_artist_overall, artist_listentime_overall, artist_totsongs_overall,
+                artist_songsplayed_overall)),
+            columns=['Artist', 'Total_listening_time_in_ms', 'Total_no_of_songs_listened',
+                     'No_of_times_played'])
 
         df['fav_artist_score'] = 1.5 * ((df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
-                    df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + \
-                    1.2 * ((df['Total_no_of_songs_listened'] - df['Total_no_of_songs_listened'].min()) /
-                           (df['Total_no_of_songs_listened'].max() - df['Total_no_of_songs_listened'].min())) + \
-                            0.8 * ((df['No_of_times_played'] - df['No_of_times_played'].min()) /
-                                   (df['No_of_times_played'].max() - df['No_of_times_played'].min()))
+                df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + \
+                                 1.2 * ((df['Total_no_of_songs_listened'] - df['Total_no_of_songs_listened'].min()) /
+                                        (df['Total_no_of_songs_listened'].max() - df[
+                                            'Total_no_of_songs_listened'].min())) + \
+                                 0.8 * ((df['No_of_times_played'] - df['No_of_times_played'].min()) /
+                                        (df['No_of_times_played'].max() - df['No_of_times_played'].min()))
 
         df = df.sort_values(by=['fav_artist_score'], ascending=False).iloc[:50]
         df.index = range(0, 50)
@@ -127,7 +158,8 @@ class Analytics:
             artist_songsplayed_overall = list()
             yearly_artists = self.data[self.data['year'] == self.years[i]]['master_metadata_album_artist_name'].unique()
             for j in range(0, len(yearly_artists)):
-                temp = self.yearly_data[i][self.yearly_data[i]['master_metadata_album_artist_name'] == yearly_artists[j]]
+                temp = self.yearly_data[i][
+                    self.yearly_data[i]['master_metadata_album_artist_name'] == yearly_artists[j]]
                 artist_listentime_overall.append(temp['ms_played'].sum())
                 artist_totsongs_overall.append(temp['master_metadata_track_name'].unique().shape[0])
                 artist_songsplayed_overall.append(temp.shape[0])
@@ -139,8 +171,8 @@ class Analytics:
                          'No_of_times_played'])
 
             df['fav_artist_score'] = 1.5 * (
-                        (df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
-                        df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + \
+                    (df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
+                    df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + \
                                      1.2 * ((df['Total_no_of_songs_listened'] - df[
                 'Total_no_of_songs_listened'].min()) /
                                             (df['Total_no_of_songs_listened'].max() - df[
@@ -167,9 +199,9 @@ class Analytics:
                           columns=['Song', 'Total_listening_time_in_ms', 'No_of_times_played'])
 
         df['fav_song_score'] = 1.5 * ((df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
-                    df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
-                                           (df['No_of_times_played'] - df['No_of_times_played'].min()) / (
-                                               df['No_of_times_played'].max() - df['No_of_times_played'].min()))
+                df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
+                                       (df['No_of_times_played'] - df['No_of_times_played'].min()) / (
+                                       df['No_of_times_played'].max() - df['No_of_times_played'].min()))
 
         df = df.sort_values(by=['fav_song_score'], ascending=False).iloc[:50]
         df.index = range(0, 50)
@@ -189,12 +221,13 @@ class Analytics:
                 songs_timesplayed_overall.append(temp.shape[0])
 
             df = pd.DataFrame(list(zip(yearly_songs, songs_listentime_overall, songs_timesplayed_overall)),
-                          columns=['Song', 'Total_listening_time_in_ms', 'No_of_times_played'])
+                              columns=['Song', 'Total_listening_time_in_ms', 'No_of_times_played'])
 
-            df['fav_song_score'] = 1.5 * ((df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
-                df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
-                                       (df['No_of_times_played'] - df['No_of_times_played'].min()) / (
-                                       df['No_of_times_played'].max() - df['No_of_times_played'].min()))
+            df['fav_song_score'] = 1.5 * (
+                        (df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
+                        df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
+                                           (df['No_of_times_played'] - df['No_of_times_played'].min()) / (
+                                           df['No_of_times_played'].max() - df['No_of_times_played'].min()))
 
             df = df.sort_values(by=['fav_song_score'], ascending=False).iloc[:10]
             df.index = range(0, 10)
@@ -215,9 +248,9 @@ class Analytics:
                           columns=['Album', 'Total_listening_time_in_ms', 'No_of_times_played'])
 
         df['fav_album_score'] = 1.5 * ((df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
-                    df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
-                                            (df['No_of_times_played'] - df['No_of_times_played'].min()) / (
-                                                df['No_of_times_played'].max() - df['No_of_times_played'].min()))
+                df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
+                                        (df['No_of_times_played'] - df['No_of_times_played'].min()) / (
+                                        df['No_of_times_played'].max() - df['No_of_times_played'].min()))
 
         df = df.sort_values(by=['fav_album_score'], ascending=False).iloc[:50]
         df.index = range(0, 50)
@@ -236,10 +269,11 @@ class Analytics:
         df = pd.DataFrame(list(zip(self.td, time_of_day_listentime, time_of_day_songsplayed)),
                           columns=['Time_of_day', 'Total_listening_time_in_ms', 'Total_songs_listened_to'])
 
-        df['fav_timeofday_score'] = 1.5 * ((df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
-                df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
-                                        (df['Total_songs_listened_to'] - df['Total_songs_listened_to'].min()) / (
-                                        df['Total_songs_listened_to'].max() - df['Total_songs_listened_to'].min()))
+        df['fav_timeofday_score'] = 1.5 * (
+                    (df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
+                    df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
+                                            (df['Total_songs_listened_to'] - df['Total_songs_listened_to'].min()) / (
+                                            df['Total_songs_listened_to'].max() - df['Total_songs_listened_to'].min()))
 
         df = df.sort_values(by=['fav_timeofday_score'], ascending=False).iloc[:50]
         df.index = range(0, 4)
@@ -259,10 +293,10 @@ class Analytics:
                           columns=['Day_of_the_week', 'Total_listening_time_in_ms', 'Total_songs_listened_to'])
 
         df['fav_day_score'] = 1.5 * ((df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
-                    df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
-                                          (df['Total_songs_listened_to'] - df['Total_songs_listened_to'].min()) / (
-                                              df['Total_songs_listened_to'].max() - df[
-                                          'Total_songs_listened_to'].min()))
+                df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
+                                      (df['Total_songs_listened_to'] - df['Total_songs_listened_to'].min()) / (
+                                      df['Total_songs_listened_to'].max() - df[
+                                  'Total_songs_listened_to'].min()))
 
         df = df.sort_values(by=['fav_day_score'], ascending=False).iloc[:50]
         df.index = range(0, 7)
@@ -319,4 +353,3 @@ class Analytics:
         df_day_songs_listened['Date'] = df_day_songs_listened['Date'].astype('object')
 
         return df_day_songs_listened, df_day_songs_listened.iloc[:10]
-
