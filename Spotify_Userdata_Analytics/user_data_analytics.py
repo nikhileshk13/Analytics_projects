@@ -10,27 +10,23 @@ class Analytics:
         self.data.drop(
             ['username', 'platform', 'conn_country', 'ip_addr_decrypted', 'user_agent_decrypted', 'shuffle', 'skipped',
              'offline', 'offline_timestamp', 'incognito_mode', 'episode_name', 'episode_show_name',
-             'spotify_episode_uri'], axis=1, inplace=True)
+             'spotify_episode_uri', 'reason_start', 'reason_end'], axis=1, inplace=True)
         na_ind = list(self.data[self.data['master_metadata_track_name'].isna()].index)
         self.data.drop(na_ind, inplace=True)
         self.data['ts'] = pd.to_datetime(self.data['ts'], infer_datetime_format=True)
         self.data.sort_values(by=['ts'], inplace=True)
         self.data.index = range(0, self.data.shape[0])
-        self.data['date'] = [d.date() for d in self.data['ts']]
-        self.data['time'] = [d.time() for d in self.data['ts']]
-        self.data['day_of_week'] = [d.day_name() for d in self.data['ts']]
-        self.data['year'] = [d.year for d in self.data['ts']]
-
+ 
         self.yearly_data = list()
-        self.years = self.data['year'].unique()
+        self.years = data['ts'].dt.year.unique()
         for i in range(0, len(self.years)):
-            temp = self.data[self.data['year'] == self.years[i]]
+            temp = data[data['ts'].dt.year == self.years[i]]
             self.yearly_data.append(temp)
 
         self.tot_artist_overall = self.data['master_metadata_album_artist_name'].unique()
-        self.tot_songs_overall = self.data['master_metadata_track_name'].unique()
+        self.tot_songs_overall = self.data['spotify_track_uri'].unique()
         self.tot_albums_overall = self.data['master_metadata_album_album_name'].unique()
-        self.dates_unique = self.data['date'].unique()
+        self.dates_unique = self.data['ts'].dt.date.unique()
         self.unique_months = data['ts'].dt.strftime('%m/%y').unique()
 
         self.morn = [dt.time(6, 0, 0), dt.time(11, 59, 59)]
@@ -58,7 +54,6 @@ class Analytics:
                                                  columns=['Month', 'Total_listening_time'])
 
         return df_listening_time_monthly
-
 
     def songs_listened(self):
         songs_yearly = list()
@@ -117,7 +112,6 @@ class Analytics:
             artists_listened_monthly.append(len(temp['master_metadata_album_artist_name'].unique()))
         df_artists_listened_monthly = pd.DataFrame(list(zip(self.unique_months, artists_listened_monthly)),
                                                    columns=['Month', 'Number_of_artists_listened'])
-        
         return df_artists_listened_monthly
 
     def favorite_artist(self):
@@ -156,7 +150,7 @@ class Analytics:
             artist_listentime_overall = list()
             artist_totsongs_overall = list()
             artist_songsplayed_overall = list()
-            yearly_artists = self.data[self.data['year'] == self.years[i]]['master_metadata_album_artist_name'].unique()
+            yearly_artists = self.data[self.data['ts'].dt.year == self.years[i]]['master_metadata_album_artist_name'].unique()
             for j in range(0, len(yearly_artists)):
                 temp = self.yearly_data[i][
                     self.yearly_data[i]['master_metadata_album_artist_name'] == yearly_artists[j]]
@@ -187,16 +181,23 @@ class Analytics:
         return yearly_fav_artists, self.years
 
     def favorite_song(self):
+        songs_name = list()
+        songs_artist = list()
+        songs_album = list()
         songs_listentime_overall = list()
         songs_timesplayed_overall = list()
 
         for i in range(0, len(self.tot_songs_overall)):
-            temp = self.data[self.data['master_metadata_track_name'] == self.tot_songs_overall[i]]
+            temp = self.data[self.data['spotify_track_uri'] == self.tot_songs_overall[i]]
+            songs_name.append(temp['master_metadata_track_name'].iloc[0])
+            songs_artist.append(temp['master_metadata_album_artist_name'].iloc[0])
+            songs_album.append(temp['master_metadata_album_album_name'].iloc[0])
             songs_listentime_overall.append(temp['ms_played'].sum())
             songs_timesplayed_overall.append(temp.shape[0])
 
-        df = pd.DataFrame(list(zip(self.tot_songs_overall, songs_listentime_overall, songs_timesplayed_overall)),
-                          columns=['Song', 'Total_listening_time_in_ms', 'No_of_times_played'])
+        df = pd.DataFrame(list(zip(songs_name, songs_artist, songs_album, self.tot_songs_overall,
+                        songs_listentime_overall, songs_timesplayed_overall)), columns=['Song', 'Artist',
+                        'Album', 'Spotify_track_uri', 'Total_listening_time_in_ms', 'No_of_times_played'])
 
         df['fav_song_score'] = 1.5 * ((df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
                 df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
@@ -213,15 +214,22 @@ class Analytics:
         for i in range(0, len(self.years)):
             songs_listentime_overall = list()
             songs_timesplayed_overall = list()
-            yearly_songs = self.data[self.data['year'] == self.years[i]]['master_metadata_track_name'].unique()
+            songs_name = list()
+            songs_artist = list()
+            songs_album = list()
+            yearly_songs = self.data[self.data['ts'].dt.year == self.years[i]]['spotify_track_uri'].unique()
             for j in range(0, len(yearly_songs)):
                 temp = self.yearly_data[i][
-                    self.yearly_data[i]['master_metadata_track_name'] == yearly_songs[j]]
+                    self.yearly_data[i]['spotify_track_uri'] == yearly_songs[j]]
+                songs_name.append(temp['master_metadata_track_name'].iloc[0])
+                songs_artist.append(temp['master_metadata_album_artist_name'].iloc[0])
+                songs_album.append(temp['master_metadata_album_album_name'].iloc[0])
                 songs_listentime_overall.append(temp['ms_played'].sum())
                 songs_timesplayed_overall.append(temp.shape[0])
 
-            df = pd.DataFrame(list(zip(yearly_songs, songs_listentime_overall, songs_timesplayed_overall)),
-                              columns=['Song', 'Total_listening_time_in_ms', 'No_of_times_played'])
+            df = pd.DataFrame(list(zip(songs_name, songs_artist, songs_album, yearly_songs,
+                    songs_listentime_overall, songs_timesplayed_overall)), columns=['Song', 'Artist', 'Album',
+                    'Spotify_track_uri', 'Total_listening_time_in_ms', 'No_of_times_played'])
 
             df['fav_song_score'] = 1.5 * (
                         (df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
@@ -238,14 +246,17 @@ class Analytics:
     def favorite_album(self):
         albums_listentime_overall = list()
         albums_timesplayed_overall = list()
+        albums_artist = list()
 
         for i in range(0, len(self.tot_albums_overall)):
             temp = self.data[self.data['master_metadata_album_album_name'] == self.tot_albums_overall[i]]
+            albums_artist.append(temp['master_metadata_album_artist_name'].iloc[0])
             albums_listentime_overall.append(temp['ms_played'].sum())
             albums_timesplayed_overall.append(temp.shape[0])
 
-        df = pd.DataFrame(list(zip(self.tot_albums_overall, albums_listentime_overall, albums_timesplayed_overall)),
-                          columns=['Album', 'Total_listening_time_in_ms', 'No_of_times_played'])
+        df = pd.DataFrame(list(zip(self.tot_albums_overall, albums_artist, albums_listentime_overall,
+                                   albums_timesplayed_overall)),
+                          columns=['Album', 'Artist', 'Total_listening_time_in_ms', 'No_of_times_played'])
 
         df['fav_album_score'] = 1.5 * ((df['Total_listening_time_in_ms'] - df['Total_listening_time_in_ms'].min()) / (
                 df['Total_listening_time_in_ms'].max() - df['Total_listening_time_in_ms'].min())) + 1 * (
@@ -262,7 +273,8 @@ class Analytics:
         time_of_day_songsplayed = list()
 
         for i in range(0, 4):
-            temp = self.data[[d >= self.time_of_day[i][0] and d <= self.time_of_day[i][1] for d in self.data['time']]]
+            temp = self.data[[d >= self.time_of_day[i][0] and d <= self.time_of_day[i][1]
+                              for d in self.data['ts'].dt.time]]
             time_of_day_songsplayed.append(temp.shape[0])
             time_of_day_listentime.append(temp['ms_played'].sum())
 
@@ -285,7 +297,7 @@ class Analytics:
         favday_songsplayed = list()
 
         for i in weekdays:
-            temp = self.data[self.data['day_of_week'] == i]
+            temp = self.data[self.data['ts'].dt.day_name() == i]
             favday_listentime.append(temp['ms_played'].sum())
             favday_songsplayed.append(temp.shape[0])
 
@@ -306,18 +318,22 @@ class Analytics:
     def day_most_repeated_song(self):
         most_played_day = list()
         for i in range(0, len(self.dates_unique)):
-            most_played_day.append(['nothing', 0])
+            most_played_day.append(['nothing', 0, 'nothing', 'nothing', 'nothing'])
 
         for i in range(0, len(self.dates_unique)):
-            temp = self.data[self.data['date'] == self.dates_unique[i]]
-            temp_songs = temp['master_metadata_track_name'].unique()
+            temp = self.data[self.data['ts'].dt.date == self.dates_unique[i]]
+            temp_songs = temp['spotify_track_uri'].unique()
             for j in temp_songs:
-                temp2 = temp[temp['master_metadata_track_name'] == j]
+                temp2 = temp[temp['spotify_track_uri'] == j]
                 if temp2.shape[0] > most_played_day[i][1]:
-                    most_played_day[i][0] = j
+                    most_played_day[i][0] = temp2['master_metadata_track_name'].iloc[0]
                     most_played_day[i][1] = temp2.shape[0]
+                    most_played_day[i][2] = temp2['master_metadata_album_artist_name'].iloc[0]
+                    most_played_day[i][3] = temp2['master_metadata_album_album_name'].iloc[0]
+                    most_played_day[i][4] = j
 
-        df = pd.DataFrame(most_played_day, columns=['Name_of_song', 'No_of_times_played'])
+        df = pd.DataFrame(most_played_day, columns=['Name_of_song', 'No_of_times_played', 'Artist', 'Album',
+                                                    'Spotify_track_uri'])
         df.insert(loc=0, column='Date', value=self.dates_unique)
         df_most_played_singleday = df.sort_values(by=['No_of_times_played'], ascending=False).iloc[:50]
         df_most_played_singleday.index = range(0, 50)
@@ -327,7 +343,7 @@ class Analytics:
     def day_highest_listening_time(self):
         day_listening_time = list()
         for i in range(0, len(self.dates_unique)):
-            temp = self.data[self.data['date'] == self.dates_unique[i]]
+            temp = self.data[self.data['ts'].dt.date == self.dates_unique[i]]
             day_listening_time.append(temp['ms_played'].sum())
 
         df_day_listening_time = pd.DataFrame(list(zip(self.dates_unique, day_listening_time)),
@@ -342,7 +358,7 @@ class Analytics:
     def day_most_songs_listened(self):
         day_songs_listened = list()
         for i in range(0, len(self.dates_unique)):
-            temp = self.data[self.data['date'] == self.dates_unique[i]]
+            temp = self.data[self.data['ts'].dt.date == self.dates_unique[i]]
             day_songs_listened.append(len(temp['master_metadata_track_name'].unique()))
 
         df_day_songs_listened = pd.DataFrame(list(zip(self.dates_unique, day_songs_listened)),
