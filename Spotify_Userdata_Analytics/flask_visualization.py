@@ -110,7 +110,7 @@ def new_songs_discovered():
     fig.update_traces(textposition='outside', textinfo='label+value+text')
     fig.update_layout(annotations=[dict(text='Total Artists Listened',
                                         x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
-                                   dict(text=str(a['New_artists_discovered'].sum()),
+                                   dict(text=str(a['New_songs_discovered'].sum()),
                                         x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'New Songs Discovered Each Year'
@@ -127,7 +127,7 @@ def new_artists_discovered():
     fig.update_traces(textposition='outside', textinfo='label+value+text')
     fig.update_layout(annotations=[dict(text='Total Songs Listened',
                                         x=0.5, y=0.5, font_size=15, showarrow=False, align='center'),
-                                   dict(text=str(a['New_songs_discovered'].sum()),
+                                   dict(text=str(a['New_artists_discovered'].sum()),
                                         x=0.5, y=0.4, font_size=15, showarrow=False, align='center')])
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'New Artists Discovered Each Year'
@@ -176,8 +176,8 @@ def fav_songs_overall():
     a, b = ob.favorite_song()
     fig = px.bar(b, x='Song', y="fav_song_score", color='Song', title='Top 10 Favorite Songs Overall',
                  labels={'fav_song_score': 'Score', 'Total_listening_time_in_ms': 'Listening Time in ms',
-                         'No_of_times_played': 'Number of Times Played'},
-                 hover_data=['Total_listening_time_in_ms', 'No_of_times_played'])
+                         'No_of_times_played': 'Number of Times Played', 'Spotify_track_uri': 'Spotify Track URI'},
+                 hover_data=['Artist', 'Album', 'Total_listening_time_in_ms', 'No_of_times_played', 'Spotify_track_uri'])
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Favorite Songs Overall'
     description = 'This chart shows the favorite songs overall. The favorite songs are determined by a score' \
@@ -188,19 +188,19 @@ def fav_songs_overall():
 
 @app.route('/fav_songs_yearly')
 def fav_songs_yearly():
-    a, b = ob.favorite_artist_yearly()
+    a, b = ob.favorite_song_yearly()
     figs = list()
     for i in range(0, len(a)):
-        fig = px.bar(a[i], x='Artist', y="fav_artist_score", color='Artist',
+        fig = px.bar(a[i], x='Song', y="fav_song_score", color='Song',
                      title='Top 10 Favorite Artists for the Year ' + str(b[i]),
-                     labels={'fav_artist_score': 'Score', 'Total_listening_time_in_ms': 'Listening Time in ms',
-                             'Total_no_of_songs_listened': 'Number of Songs Listened',
-                             'No_of_times_played': 'Number of Times Played'},
-                     hover_data=['Total_listening_time_in_ms', 'Total_no_of_songs_listened', 'No_of_times_played'])
+                     labels={'fav_song_score': 'Score', 'Total_listening_time_in_ms': 'Listening Time in ms',
+                             'No_of_times_played': 'Number of Times Played', 'Spotify_track_uri': 'Spotify Track URI'},
+                     hover_data=['Artist', 'Album', 'Total_listening_time_in_ms', 'No_of_times_played',
+                                 'Spotify_track_uri'])
         figs.append(fig)
     header = 'Favorite Songs for Each Year'
-    description = 'These charts shows the favorite songs for each year. The favorite artists are determined by a ' \
-                  'score calculated using metrics such as the total listening time of a song, number of times that ' \
+    description = 'These charts shows the favorite songs for each year. The favorite songs are determined by a ' \
+                  'score calculated using metrics such as the total listening time of a song and number of times that ' \
                   'song has been played.'
     return render_template('test_flask_yearly.html', graph=figs, header=header, description=description)
 
@@ -211,7 +211,7 @@ def fav_albums():
     fig = px.bar(b, x='Album', y="fav_album_score", color='Album', title='Top 10 Favorite Albums',
                  labels={'fav_album_score': 'Score', 'Total_listening_time_in_ms': 'Listening Time in ms',
                          'No_of_times_played': 'Number of Times Played'},
-                 hover_data=['Total_listening_time_in_ms', 'No_of_times_played'])
+                 hover_data=['Artist', 'Total_listening_time_in_ms', 'No_of_times_played'])
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Favorite Albums Overall'
     description = 'This chart shows the favorite albums overall. The favorite albums are determined by a score' \
@@ -258,9 +258,12 @@ def most_repeated_song():
     a, b = ob.day_most_repeated_song()
     fig = px.bar(b, x='Name_of_song', y="No_of_times_played", color='Name_of_song',
                  title='Songs that were most repeated in a single day',
-                 labels={'No_of_times_played': 'Number of Times Played', 'Name_of_song': 'Name of the Song'},
-                 hover_data=['Date'])
+                 labels={'No_of_times_played': 'Number of Times Played', 'Name_of_song': 'Name of the Song',
+                         'Spotify_track_uri':'Spotify Track URI'},
+                 hover_data=['Date', 'Artist', 'Album', 'Spotify_track_uri'])
     fig.update_xaxes(showticklabels=False)
+    print(b['No_of_times_played'])
+    b.to_csv('testtt.csv')
     graph = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     header = 'Songs that were Most Repeated in a Single Day'
     description = 'This chart shows the songs that were most repeated in a single day'
