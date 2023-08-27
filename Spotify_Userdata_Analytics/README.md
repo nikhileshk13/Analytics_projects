@@ -10,4 +10,6 @@ The following image shows the different statistics I have found using this data:
 </p>
 The favorite songs, albums and artists are determined by a score calculated by assigning appropriate weights to each feature. 
 <br><br>
+Click here to view the python notebook
+https://nbviewer.org/github/Nickkxiii/Analytics_projects/blob/main/Spotify_Userdata_Analytics/spotify_userdata_analytics_plotly_final.ipynb
 <a href="https://nbviewer.org/github/Nickkxiii/Analytics_projects/blob/main/Spotify_Userdata_Analytics/spotify_userdata_analytics_plotly_final.ipynb">Click here to view the python notebook</a>
