@@ -4,7 +4,7 @@ In the Spotify Extended Streaming History data each entry corresponds to a song/
 <p>
   <img src="https://github.com/Nickkxiii/Analytics_projects/blob/main/Spotify_Userdata_Analytics/images/data_spotify.png">
 </p>
-The following image shows the different statistics I have found using this data <br>
-<p>
+The following image shows the different statistics I have found using this data
+<p padding=10px>
   <img src="https://github.com/Nickkxiii/Analytics_projects/blob/main/Spotify_Userdata_Analytics/images/stats.png">
 </p>
