@@ -1,3 +1,5 @@
+import datetime
+
 import pandas as pd
 import numpy as np
 import datetime as dt
@@ -16,7 +18,7 @@ class Analytics:
         self.data['ts'] = pd.to_datetime(self.data['ts'], infer_datetime_format=True)
         self.data.sort_values(by=['ts'], inplace=True)
         self.data.index = range(0, self.data.shape[0])
- 
+
         self.yearly_data = list()
         self.years = data['ts'].dt.year.unique()
         for i in range(0, len(self.years)):
@@ -56,6 +58,7 @@ class Analytics:
         return df_listening_time_monthly
 
     def songs_listened(self):
+
         songs_yearly = list()
         for i in range(0, len(self.yearly_data)):
             songs_yearly.append(self.yearly_data[i]['master_metadata_track_name'].unique().shape[0])
@@ -86,6 +89,7 @@ class Analytics:
         return df_songs_listened_monthly
 
     def artists_listened(self):
+
         artists_yearly = list()
         for i in range(0, len(self.yearly_data)):
             artists_yearly.append(self.yearly_data[i]['master_metadata_album_artist_name'].unique().shape[0])
@@ -150,6 +154,7 @@ class Analytics:
             artist_listentime_overall = list()
             artist_totsongs_overall = list()
             artist_songsplayed_overall = list()
+            # yearly_artists = self.data[self.data['year'] == self.years[i]]['master_metadata_album_artist_name'].unique()
             yearly_artists = self.data[self.data['ts'].dt.year == self.years[i]]['master_metadata_album_artist_name'].unique()
             for j in range(0, len(yearly_artists)):
                 temp = self.yearly_data[i][
@@ -217,6 +222,7 @@ class Analytics:
             songs_name = list()
             songs_artist = list()
             songs_album = list()
+            # yearly_songs = self.data[self.data['year'] == self.years[i]]['master_metadata_track_name'].unique()
             yearly_songs = self.data[self.data['ts'].dt.year == self.years[i]]['spotify_track_uri'].unique()
             for j in range(0, len(yearly_songs)):
                 temp = self.yearly_data[i][
@@ -351,7 +357,7 @@ class Analytics:
         df_day_listening_time = df_day_listening_time.sort_values(by=['Total_listening_time_in_ms'],
                                                                   ascending=False).iloc[:50]
         df_day_listening_time.index = range(0, 50)
-        df_day_listening_time['Date'] = df_day_listening_time['Date'].astype('object')
+        df_day_listening_time['Date'] = [x.strftime('%d/%m/%Y') for x in df_day_listening_time['Date']]
 
         return df_day_listening_time, df_day_listening_time.iloc[:10]
 
@@ -366,6 +372,6 @@ class Analytics:
         df_day_songs_listened = df_day_songs_listened.sort_values(by=['Different_songs_listened'],
                                                                   ascending=False).iloc[:50]
         df_day_songs_listened.index = range(0, 50)
-        df_day_songs_listened['Date'] = df_day_songs_listened['Date'].astype('object')
+        df_day_songs_listened['Date'] = [x.strftime('%d/%m/%Y') for x in df_day_songs_listened['Date']]
 
         return df_day_songs_listened, df_day_songs_listened.iloc[:10]
