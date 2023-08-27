@@ -4,7 +4,8 @@ In the Spotify Extended Streaming History data each entry corresponds to a song/
 <p>
   <img src="https://github.com/Nickkxiii/Analytics_projects/blob/main/Spotify_Userdata_Analytics/images/data_spotify.png">
 </p>
-The following image shows the different statistics I have found using this data <br><br>
+The following image shows the different statistics I have found using this data: <br><br>
 <p>
   <img src="https://github.com/Nickkxiii/Analytics_projects/blob/main/Spotify_Userdata_Analytics/images/stats.png">
 </p>
+The favorite songs, albums and artists are determined by a score calculated by assigning appropriate weights to each feature. 
